@@ -1,0 +1,22 @@
+#!/bin/bash
+#SBATCH --time=24:00:00
+#SBATCH --mem=45GB
+#SBATCH --job-name=im2
+#SBATCH --output=logs/%x_%A_%a.out
+#SBATCH --error=logs/%x_%A_%a.err
+#SBATCH --cpus-per-task=4
+#SBATCH --array=0-0
+#SBATCH --gres=gpu:a100:1
+
+SING_LOCATION="$SCRATCH/overlay_files/overlay-50G-10M.ext3"
+SING_CUDA_LOCATION="/scratch/work/public/singularity/cuda11.6.124-cudnn8.4.0.27-devel-ubuntu20.04.4.sif"
+SING_ENV_FILE="/ext3/env.sh"
+CONDA_ENV_NAME="new"
+ROOT_DIR="/scratch/mg3479/variance_reduced_dgms"
+singularity exec --nv --overlay ${SING_LOCATION}:ro ${SING_CUDA_LOCATION} /bin/bash -c "
+cd ${ROOT_DIR}
+source ${SING_ENV_FILE}
+conda activate ${CONDA_ENV_NAME}
+
+python train_flow.py --index ${SLURM_ARRAY_TASK_ID}
+"
